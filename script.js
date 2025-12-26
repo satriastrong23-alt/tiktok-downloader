@@ -1,130 +1,80 @@
-// TikTok Downloader - Simple Version
-console.log("TikTok Downloader Loaded!");
+// Simple TikTok Downloader
+console.log("TikTok Downloader Ready!");
 
-async function downloadVideo() {
+function downloadVideo() {
     const url = document.getElementById('tiktokUrl').value.trim();
+    const errorDiv = document.getElementById('error');
     
+    // Reset error
+    errorDiv.classList.add('d-none');
+    
+    // Validasi
     if (!url) {
-        alert('Masukkan URL TikTok terlebih dahulu!');
+        showError("Masukkan URL TikTok!");
         return;
     }
     
-    if (!url.includes('tiktok.com')) {
-        alert('URL harus dari TikTok.com! Contoh: https://www.tiktok.com/@user/video/123456789');
+    if (!url.includes('tiktok.com') && !url.includes('vt.tiktok.com')) {
+        showError("URL harus dari TikTok! Contoh: https://www.tiktok.com/@user/video/123456789");
         return;
     }
     
     // Tampilkan loading
-    document.getElementById('loading').classList.remove('d-none');
-    document.getElementById('result').classList.add('d-none');
-    document.getElementById('error').classList.add('d-none');
-    
-    try {
-        // Gunakan API TikTok downloader
-        const apiUrl = `https://www.tikwm.com/api/?url=${encodeURIComponent(url)}&hd=1`;
-        
-        const response = await fetch(apiUrl);
-        const data = await response.json();
-        
-        if (data.code === 0 && data.data) {
-            showVideoResult(data.data);
-        } else {
-            throw new Error('Video tidak ditemukan');
-        }
-    } catch (error) {
-        document.getElementById('error').classList.remove('d-none');
-        document.getElementById('error').innerHTML = 
-            `<i class="fas fa-exclamation-triangle"></i> Gagal: ${error.message}. Coba URL lain.`;
-    } finally {
-        document.getElementById('loading').classList.add('d-none');
-    }
-}
-
-function showVideoResult(video) {
+    const loading = document.getElementById('loading');
     const result = document.getElementById('result');
-    const videoInfo = document.getElementById('videoInfo');
-    const downloadOptions = document.getElementById('downloadOptions');
     
-    // Tampilkan info video
-    videoInfo.innerHTML = `
-        <div class="row">
-            <div class="col-md-4">
-                <img src="${video.cover}" class="img-fluid rounded" alt="Thumbnail">
+    loading.classList.remove('d-none');
+    result.classList.add('d-none');
+    
+    // Proses download
+    setTimeout(() => {
+        loading.classList.add('d-none');
+        
+        // Contoh URL download (pakai API publik)
+        const downloadUrl = `https://tikcdn.io/ssstik/${url.split('/').pop()}`;
+        
+        // Tampilkan hasil
+        document.getElementById('videoInfo').innerHTML = `
+            <div class="alert alert-info">
+                <h5>Video Siap Download!</h5>
+                <p>Klik tombol di bawah untuk download</p>
             </div>
-            <div class="col-md-8">
-                <h6>${video.title || 'Video TikTok'}</h6>
-                <p><i class="fas fa-user"></i> ${video.author?.nickname || 'Unknown'}</p>
-                <p><i class="fas fa-clock"></i> ${formatDuration(video.duration)}</p>
+        `;
+        
+        document.getElementById('downloadOptions').innerHTML = `
+            <div class="text-center">
+                <a href="https://ssstik.io/en?url=${encodeURIComponent(url)}" 
+                   class="btn btn-success btn-lg mb-2"
+                   target="_blank">
+                   <i class="fas fa-download"></i> Download via SSSTik (No Watermark)
+                </a>
+                <br>
+                <small class="text-muted">*Akan dibuka di halaman baru</small>
             </div>
-        </div>
-    `;
-    
-    // Tampilkan tombol download
-    downloadOptions.innerHTML = `
-        <div class="mt-4">
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <div class="card bg-dark border-success">
-                        <div class="card-body text-center">
-                            <span class="badge bg-success">NO WATERMARK</span>
-                            <p class="mt-2">Video HD tanpa logo TikTok</p>
-                            <a href="${video.play || video.hdplay}" 
-                               class="btn btn-success btn-lg w-100"
-                               download="tiktok_no_watermark.mp4">
-                                <i class="fas fa-download"></i> Download HD
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                ${video.wmplay ? `
-                <div class="col-md-6 mb-3">
-                    <div class="card bg-dark border-warning">
-                        <div class="card-body text-center">
-                            <span class="badge bg-warning">WITH WATERMARK</span>
-                            <p class="mt-2">Video dengan logo TikTok</p>
-                            <a href="${video.wmplay}" 
-                               class="btn btn-warning btn-lg w-100"
-                               download="tiktok_with_watermark.mp4">
-                                <i class="fas fa-download"></i> Download
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                ` : ''}
-            </div>
-        </div>
-    `;
-    
-    // Tampilkan hasil
-    result.classList.remove('d-none');
-    
-    // Scroll ke hasil
-    result.scrollIntoView({ behavior: 'smooth' });
+        `;
+        
+        result.classList.remove('d-none');
+        
+        // Scroll ke hasil
+        result.scrollIntoView({ behavior: 'smooth' });
+        
+    }, 1500); // Delay 1.5 detik
 }
 
-function formatDuration(seconds) {
-    if (!seconds) return 'Unknown';
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+function showError(message) {
+    const errorDiv = document.getElementById('error');
+    errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${message}`;
+    errorDiv.classList.remove('d-none');
 }
 
-// Support Enter key
+// Enter key support
 document.getElementById('tiktokUrl').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') downloadVideo();
+    if (e.key === 'Enter') {
+        downloadVideo();
+    }
 });
 
 // Auto focus
 window.onload = function() {
     document.getElementById('tiktokUrl').focus();
-    
-    // Contoh URL placeholder
-    const examples = [
-        "https://www.tiktok.com/@tiktok/video/123456789",
-        "https://vm.tiktok.com/ZMexample123/",
-        "https://tiktok.com/@user/video/1234567890123456789"
-    ];
-    
-    const randomExample = examples[Math.floor(Math.random() * examples.length)];
-    document.getElementById('tiktokUrl').placeholder = `Contoh: ${randomExample}`;
 };
